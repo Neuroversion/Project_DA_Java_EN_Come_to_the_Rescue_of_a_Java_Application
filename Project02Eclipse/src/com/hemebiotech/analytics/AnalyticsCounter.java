@@ -1,43 +1,60 @@
 package com.hemebiotech.analytics;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.util.*;
 
+/**
+ * Service which permit to compute statistics about symptoms.
+ *
+ * @author Ridouan
+ */
 public class AnalyticsCounter {
-	private static int headacheCount = 0;	// initialize to 0
-	private static int rashCount = 0;		// initialize to 0
-	private static int pupilCount = 0;		// initialize to 0
-	
-	public static void main(String args[]) throws Exception {
-		// first get input
-		BufferedReader reader = new BufferedReader (new FileReader("symptoms.txt"));
-		String line = reader.readLine();
+    /**
+     * Compute analytics about symptoms in the results.out file.
+     */
+    public void computeAnalytics() {
+        try {
+            // Read symptom from file symptom.txt
+            ISymptomReader reader = new ReadSymptomDataFromFile("symptom.txt");
+            List<String> symptoms = reader.getSymptoms();
+            /*
+             * Count occurrences of each symptom using occurrence method below
+             */
+            Map<String, Integer> occurrencesMap = nbOccurrencesMap(symptoms);
 
-		int i = 0;	// set i to 0
-		int headCount = 0;	// counts headaches
-		while (line != null) {
-			i++;	// increment i
-			System.out.println("symptom from file: " + line);
-			if (line.equals("headache")) {
-				headCount++;
-				System.out.println("number of headaches: " + headCount);
-			}
-			else if (line.equals("rush")) {
-				rashCount++;
-			}
-			else if (line.contains("pupils")) {
-				pupilCount++;
-			}
+            // Sort occurrences symptoms by alphabetical order.
+            TreeMap<String, Integer> occurrencesMapSorted = sortOccurrenceMap(occurrencesMap);
+            /*
+             * Write the occurrence number of each symptom in the file "results.out"
+             */
+            ISymptomWriter symptomWriter = new WriteSymptomOccurrenceToFile("results.out");
+            symptomWriter.writeSymptomsOccurrences(occurrencesMapSorted);
+            
+        } catch (Exception e) {
+            System.err.println("Error, files cannot be counted");
+            e.printStackTrace();
+        }
+    }
 
-			line = reader.readLine();	// get another symptom
-		}
-		
-		// next generate output
-		FileWriter writer = new FileWriter ("result.out");
-		writer.write("headache: " + headacheCount + "\n");
-		writer.write("rash: " + rashCount + "\n");
-		writer.write("dialated pupils: " + pupilCount + "\n");
-		writer.close();
-	}
+    private Map<String, Integer> nbOccurrencesMap(List<String> symptoms) {
+        Set<String> uniqueSymptoms = new HashSet<>(symptoms);
+        Map<String, Integer> myMap = new HashMap<>();
+        for (String symptom : uniqueSymptoms) {
+            int nbOccurrenceSymptom = Collections.frequency(symptoms, symptom);
+            myMap.put(symptom, nbOccurrenceSymptom);
+        }
+
+        return myMap;
+    }
+
+    /*
+     * Sort occurrences symptoms by alphabetical order.
+     */
+    private TreeMap<String, Integer> sortOccurrenceMap(Map<String, Integer> occurrenceMap) {
+        TreeMap<String, Integer> treeMap = new TreeMap<>();
+
+        treeMap.putAll(occurrenceMap);
+
+        return treeMap;
+    }
 }
+
